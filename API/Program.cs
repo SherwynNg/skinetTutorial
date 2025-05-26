@@ -1,6 +1,10 @@
+using API.Dtos;
+using API.Helpers;
+using AutoMapper;
+using Core.Entities;
 using Core.Interfaces;
+using Core.Specifications;
 using Infrastructure.Data;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), (typeof(GenericRepository<>)));
+builder.Services.AddAutoMapper(typeof(MappingProfiles));
 builder.Services.AddDbContext<StoreContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddEndpointsApiExplorer();
@@ -40,6 +46,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 var summaries = new[]
 {
@@ -61,33 +68,39 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast")
 .WithOpenApi();
 
-app.MapGet("/api/products", async (IProductRepository repo) =>
+app.MapGet("/api/products", async (IGenericRepository<Product> productsRepo, IGenericRepository<ProductBrand> productBrandRepo, IGenericRepository<ProductType> productTypeRepo, IMapper mapper) =>
 {
-    var products = await repo.GetProductsAsync();
-    return Results.Ok(products);
+    var spec = new ProductWithTypesAndBrandsSpecification();
+
+    var products = await productsRepo.ListAsync(spec);
+    
+    return Results.Ok(mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(products));
 })
 .WithName("GetProducts")
 .WithOpenApi();
 
-app.MapGet("/api/products/{id}", async (int id, IProductRepository repo) =>
+app.MapGet("/api/products/{id}", async (int id, IGenericRepository<Product> productsRepo, IGenericRepository<ProductBrand> productBrandRepo, IGenericRepository<ProductType> productTypeRepo, IMapper mapper) =>
 {
-    var product = await repo.GetProductByIdAsync(id);
-    return product is not null ? Results.Ok(product) : Results.NotFound();
+    var spec = new ProductWithTypesAndBrandsSpecification(id);
+
+    var product = await productsRepo.GetEntityWithSpec(spec);
+
+    return mapper.Map<Product, ProductToReturnDto>(product);
 })
 .WithName("GetProductsById")
 .WithOpenApi();
 
-app.MapGet("/api/products/brands", async (IProductRepository repo) =>
+app.MapGet("/api/products/brands", async (IGenericRepository<Product> productsRepo, IGenericRepository<ProductBrand> productBrandRepo, IGenericRepository<ProductType> productTypeRepo) =>
 {
-    var brands = await repo.GetProductBrandsAsync();
+    var brands = await productBrandRepo.ListAllAsync();
     return Results.Ok(brands);
 })
 .WithName("GetProductBrands")
 .WithOpenApi();
 
-app.MapGet("/api/products/types", async (IProductRepository repo) =>
+app.MapGet("/api/products/types", async (IGenericRepository<Product> productsRepo, IGenericRepository<ProductBrand> productBrandRepo, IGenericRepository<ProductType> productTypeRepo) =>
 {
-    var brands = await repo.GetproductTypesAsync();
+    var brands = await productTypeRepo.ListAllAsync();
     return Results.Ok(brands);
 })
 .WithName("GetProductTypes")
