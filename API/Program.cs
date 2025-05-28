@@ -53,9 +53,9 @@ app.UseStatusCodePagesWithReExecute("/errors/{0}");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.MapGet("/api/products", async (IGenericRepository<Product> productsRepo, IGenericRepository<ProductBrand> productBrandRepo, IGenericRepository<ProductType> productTypeRepo, IMapper mapper) =>
+app.MapGet("/api/products", async (IGenericRepository<Product> productsRepo, IMapper mapper, string sort, int? brandId, int? typeId) =>
 {
-    var spec = new ProductWithTypesAndBrandsSpecification();
+    var spec = new ProductWithTypesAndBrandsSpecification(sort, brandId, typeId);
 
     var products = await productsRepo.ListAsync(spec);
     
