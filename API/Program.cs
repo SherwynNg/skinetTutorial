@@ -20,6 +20,16 @@ builder.Services.AddDbContext<StoreContext>(options =>
 builder.Services.AddApplicationServices();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        policy
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .WithOrigins("http://localhost:4200"); // Angular dev server
+    });
+});
 
 var app = builder.Build();
 
@@ -47,13 +57,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseStaticFiles();
+app.UseCors("CorsPolicy");
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseStatusCodePagesWithReExecute("/errors/{0}");
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.MapGet("/api/products", async (IGenericRepository<Product> productsRepo, IMapper mapper, string sort, int? brandId, int? typeId) =>
+app.MapGet("/api/products", async (IGenericRepository<Product> productsRepo, IMapper mapper, string? sort, int? brandId, int? typeId) =>
 {
     var spec = new ProductWithTypesAndBrandsSpecification(sort, brandId, typeId);
 
