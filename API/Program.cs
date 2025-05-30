@@ -65,13 +65,23 @@ app.UseStatusCodePagesWithReExecute("/errors/{0}");
 // app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.MapGet("/api/products", async (IGenericRepository<Product> productsRepo, IMapper mapper, string? sort, int? brandId, int? typeId) =>
+app.MapGet("/api/products", async ([AsParameters] ProductSpecParams productParams, IGenericRepository<Product> productsRepo, IMapper mapper, string? sort, int? brandId, int? typeId) =>
 {
-    var spec = new ProductWithTypesAndBrandsSpecification(sort, brandId, typeId);
+    var spec = new ProductWithTypesAndBrandsSpecification(productParams);
+    var countSpec = new ProductWithFiltersForCountSpecification(productParams);
 
+    var totalItems = await productsRepo.CountAsync(countSpec);
     var products = await productsRepo.ListAsync(spec);
+
+    var data = mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(products);
+    return Results.Ok(new Pagination<ProductToReturnDto>(
+        productParams.PageIndex, productParams.PageSize, totalItems, data
+    ));
+    // var spec = new ProductWithTypesAndBrandsSpecification(sort, brandId, typeId);
+
+    // var products = await productsRepo.ListAsync(spec);
     
-    return Results.Ok(mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(products));
+    // return Results.Ok(mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(products));
 })
 .WithName("GetProducts")
 .WithTags("Products")

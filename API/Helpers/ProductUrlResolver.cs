@@ -4,10 +4,10 @@ using Core.Entities;
 
 namespace API.Helpers
 {
-    public class productUrlResolver : IValueResolver<Product, ProductToReturnDto, string>
+    public class ProductUrlResolver : IValueResolver<Product, ProductToReturnDto, string>
     {
         private readonly IConfiguration _config;
-        public productUrlResolver(IConfiguration config)
+        public ProductUrlResolver(IConfiguration config)
         {
             _config = config;
         }
