@@ -1,32 +1,29 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NavBarComponent } from './nav-bar/nav-bar.component';
-import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { IProduct } from './models/product';
-import { IPagingation } from './models/pagination';
+import { CoreModule } from './core/core.module';
+import { NavBarComponent } from './core/nav-bar/nav-bar.component';
+import { ShopComponent } from './shop/shop.component';
+import { ShopModule } from './shop/shop.module';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavBarComponent, CommonModule],
+  imports: [
+    RouterOutlet,
+    CommonModule,
+    CoreModule,
+    NavBarComponent,
+    ShopComponent,
+    ShopModule,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
   title = 'SkiNet';
-  products: IProduct[] = [];
 
-  constructor(private http: HttpClient) {}
+  constructor() {}
 
-  ngOnInit(): void {
-    this.http.get<any>('http://localhost:5165/api/products').subscribe(
-      (response: IPagingation) => {
-        this.products = response.data;
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
-  }
+  ngOnInit(): void {}
 }

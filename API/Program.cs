@@ -65,7 +65,7 @@ app.UseStatusCodePagesWithReExecute("/errors/{0}");
 // app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.MapGet("/api/products", async ([AsParameters] ProductSpecParams productParams, IGenericRepository<Product> productsRepo, IMapper mapper, string? sort, int? brandId, int? typeId) =>
+app.MapGet("/api/products", async ([AsParameters] ProductSpecParams productParams, IGenericRepository<Product> productsRepo, IMapper mapper) =>
 {
     var spec = new ProductWithTypesAndBrandsSpecification(productParams);
     var countSpec = new ProductWithFiltersForCountSpecification(productParams);
@@ -75,7 +75,10 @@ app.MapGet("/api/products", async ([AsParameters] ProductSpecParams productParam
 
     var data = mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(products);
     return Results.Ok(new Pagination<ProductToReturnDto>(
-        productParams.PageIndex, productParams.PageSize, totalItems, data
+        productParams.GetPageIndex(),
+        productParams.GetPageSize(),
+        totalItems,
+        data
     ));
     // var spec = new ProductWithTypesAndBrandsSpecification(sort, brandId, typeId);
 
